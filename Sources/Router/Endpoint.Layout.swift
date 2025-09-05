@@ -9,7 +9,8 @@ import SwiftUI
 
 extension Endpoint {
 
-	public struct Layout<Layout: EndpointLayout>: MountPoint, EndpointRoutes, EndpointInternal {
+	@MainActor
+	public struct Layout<Layout: EndpointLayout>: MountPoint, EndpointRoutes, EndpointInternal, Sendable {
 
 		var routes: [String : MountPoint] = [:]
 		var notFound: AnyView? = nil

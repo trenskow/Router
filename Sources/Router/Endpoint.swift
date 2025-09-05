@@ -8,7 +8,7 @@
 import SwiftUI
 
 @MainActor
-public struct Endpoint: MountPoint, EndpointRoutes, EndpointInternal {
+public struct Endpoint: MountPoint, EndpointRoutes, EndpointInternal, Sendable {
 
 	var routes: [String : MountPoint] = [:]
 	var notFound: AnyView? = nil

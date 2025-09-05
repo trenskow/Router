@@ -9,14 +9,21 @@ import SwiftUI
 
 public protocol RouterApp : App {
 
+	associatedtype Root: MountPoint
+
 	static var baseURL: URL { get }
 	static var initialRelativePath: String { get }
 
-	var router: Router { get }
+	var current: URL? { get }
+
+	@MainActor
+	var root: Root { get }
 
 	func navigate(
 		to url: URL
 	)
+
+	func navigateBack()
 
 }
 
@@ -24,6 +31,22 @@ extension RouterApp {
 
 	public var initialRelativePath: String {
 		return "/"
+	}
+
+	var router: Router {
+		return Router(
+			baseUrl: Self.baseURL,
+			root: self.root,
+			navigateTo: { @MainActor url in
+				self.navigate(
+					to: url)
+			},
+			navigateBack: { @MainActor in
+				self.navigateBack()
+			},
+			current: {
+				return self.current
+			})
 	}
 
 	public var body: some Scene {

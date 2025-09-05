@@ -14,12 +14,16 @@ public struct Router: Sendable {
 	public let baseUrl: URLComponents
 	public let root: MountPoint
 
-	@Binding var navigationStack: [URL]
+	public let navigateTo: @MainActor @Sendable (URL) -> Void
+	public let navigateBack: @MainActor @Sendable () -> Void
+	public let current: @MainActor @Sendable () -> URL?
 
 	public init(
 		baseUrl: URL,
 		root: MountPoint,
-		navigationStack: Binding<[URL]>
+		navigateTo: @escaping @MainActor @Sendable (URL) -> Void,
+		navigateBack: @escaping @MainActor @Sendable () -> Void,
+		current: @escaping @MainActor @Sendable () -> URL?
 	) {
 
 		guard
@@ -30,7 +34,9 @@ public struct Router: Sendable {
 
 		self.baseUrl = baseUrl
 		self.root = root
-		self._navigationStack = navigationStack
+		self.navigateTo = navigateTo
+		self.navigateBack = navigateBack
+		self.current = current
 
 	}
 
@@ -71,7 +77,9 @@ public struct Router: Sendable {
 			.environment(\.path, path)
 			.environment(\.navigator, Navigator(
 				baseUrl: self.baseUrl.url!,
-				navigationStack: self.$navigationStack))
+				navigateTo: self.navigateTo,
+				navigateBack: self.navigateBack,
+				current: self.current))
 
 	}
 
@@ -79,7 +87,7 @@ public struct Router: Sendable {
 	public func currentView() -> some View {
 
 		if
-			let url = self.navigationStack.last,
+			let url = self.current(),
 			let view = try? self.view(for: url) {
 			view
 		} else {

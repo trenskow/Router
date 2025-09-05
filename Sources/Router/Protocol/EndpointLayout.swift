@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-public protocol EndpointLayout {
+@MainActor
+public protocol EndpointLayout: Sendable {
 
 	associatedtype Layout: View
 

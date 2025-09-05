@@ -7,38 +7,43 @@
 
 import SwiftUI
 
+@MainActor
 public struct Navigator: Sendable {
 
-	private var baseUrl: URL
-	@Binding var navigationStack: [URL]
+	private let baseUrl: URL
+	private let navigateTo: @MainActor @Sendable (URL) -> Void
+	private let navigateBack: @MainActor @Sendable () -> Void
+	private let current: @MainActor @Sendable () -> URL?
 
 	init(
 		baseUrl: URL,
-		navigationStack: Binding<[URL]>
+		navigateTo: @escaping @MainActor @Sendable (URL) -> Void,
+		navigateBack: @escaping @MainActor @Sendable () -> Void,
+		current: @escaping @MainActor @Sendable () -> URL?
 	) {
 		self.baseUrl = baseUrl
-		self._navigationStack = navigationStack
+		self.navigateTo = navigateTo
+		self.navigateBack = navigateBack
+		self.current = current
 	}
 
-	public func push(
-		relativePath: String
+	public func navigate(
+		to relativePath: String
 	) throws {
 
 		guard
 			let url = URL(string: relativePath,
-						  relativeTo: self.navigationStack.last ?? self.baseUrl)
+						  relativeTo: self.current() ?? self.baseUrl)
 		else {
 			throw RouterError.invalidUrl
 		}
 
-		self.navigationStack
-			.append(
-				url)
+		self.navigateTo(url)
 	}
 
-	public func push<Data: Encodable>(
-		relativePath: String,
-		data: Data
+	public func navigate<Data: Encodable>(
+		to relativePath: String,
+		with data: Data
 	) throws {
 
 		let queryItems = try QueryCoder.TopLevelEncoder().encode(data)
@@ -48,7 +53,7 @@ public struct Navigator: Sendable {
 		guard
 			let url = URL(
 				string: relativePath,
-				relativeTo: self.navigationStack.last ?? self.baseUrl),
+				relativeTo: self.current() ?? self.baseUrl),
 			var components = url.components
 		else {
 			throw RouterError.invalidUrl
@@ -62,22 +67,12 @@ public struct Navigator: Sendable {
 			throw RouterError.invalidUrl
 		}
 
-		self.navigationStack
-			.append(
-				url)
+		self.navigateTo(url)
 
 	}
 
-	public func pop() {
-
-		guard
-			!self.navigationStack.isEmpty
-		else {
-			return
-		}
-
-		self.navigationStack.removeLast()
-
+	public func back() {
+		self.navigateBack()
 	}
 
 }

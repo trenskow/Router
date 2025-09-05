@@ -12,10 +12,18 @@ Currently it supports telliing the system which URLs it is able to handle and th
 Below you can see an example of the current API.
 
 ````swift
+//
+//  RouterTestApp.swift
+//  RouterTest
+//
+//  Created by Kristian Trenskow on 05/09/2025.
+//
+
 import SwiftUI
 import Router
 
-struct RootLayoutView<Content: View>: View {
+@MainActor
+struct RootLayoutView<Content: View>: View, Sendable {
 
 	@Environment(\.urlComponents) var urlComponents
 
@@ -42,7 +50,10 @@ struct RootLayoutView<Content: View>: View {
 
 }
 
-struct RootLayout: EndpointLayout {
+@MainActor
+struct RootLayout: EndpointLayout, Sendable {
+
+	init() { }
 
 	func layout(
 		content: AnyView
@@ -54,29 +65,36 @@ struct RootLayout: EndpointLayout {
 
 }
 
-struct Greeting: Codable, Hashable {
+@MainActor
+struct Greeting: Codable, Hashable, Sendable {
 	let greeting: String
 }
 
+@MainActor
 struct GreetView: View {
 
 	@Environment(\.navigator) var navigator: Navigator?
 
 	var body: some View {
 		Button {
-			try? self.navigator?.push(
-				relativePath: "/content/greet",
-				data: Greeting(
+			try? self.navigator?.navigate(
+				to: "/content/greet",
+				with: Greeting(
 					greeting: "Hello, World!"))
 		} label: {
-			Text("Say Hello?")
+			VStack {
+				Text("Say Hello?")
+			}
 		}
 		.transition(.offset(CGSize(width: -50, height: 0)))
 	}
 
 }
 
+@MainActor
 struct GreeterView: View {
+
+	@Environment(\.navigator) var navigator: Navigator?
 
 	let data: Greeting
 
@@ -89,6 +107,11 @@ struct GreeterView: View {
 	var body: some View {
 		VStack {
 			Text(data.greeting)
+			Button {
+				self.navigator?.back()
+			} label: {
+				Text("Go Back")
+			}
 		}
 		.transition(.offset(CGSize(width: -50, height: 0)))
 	}
@@ -103,41 +126,54 @@ struct RouterTestApp: RouterApp {
 
 	@State var navigationStack: [URL] = []
 
-	var router: Router {
-		return Router(
-			baseUrl: Self.baseURL,
-			root: Endpoint.Layout(RootLayout.self)
-				// Mount an endpoint at `/content`
-				.mount(
-					at: "content",
-					endpoint: Endpoint()
-						// Mount a view with data at `/content/greet`.
-						.mount(
-							at: "greet",
-							Greeting.self,
-							content: { data in
-								GreeterView(
-									data: data)
-							}))
-				// Mount the greet view at `/home`
-				.mount(
-					at: "home"
-				) {
-					GreetView()
-				}
-				// What to render when url is not found.
-				.onNotFound {
-					Text("Not found")
-				},
-			navigationStack: self.$navigationStack)
+	var current: URL? {
+		return self.navigationStack.last
 	}
+
+	@MainActor
+	let root = Endpoint.Layout(RootLayout.self)
+		// First we mount `/content`
+		.mount(
+			at: "content",
+			endpoint: Endpoint()
+				// Mount `/content/greet`
+				.mount(
+					at: "greet",
+					Greeting.self,
+					content: { data in
+						GreeterView(
+							data: data)
+					}))
+		// Then we mount `/home`
+		.mount(
+			at: "home"
+		) {
+			GreetView()
+		}
+		// View to display when URL was not found.
+		.onNotFound {
+			Text("Not found")
+		}
 
 	func navigate(to url: URL) {
 		self.navigationStack
 			.append(url)
 	}
 
+	func navigateBack() {
+
+		guard
+			!self.navigationStack.isEmpty
+		else {
+			return
+		}
+
+		self.navigationStack.removeLast()
+
+	}
+
 }
+
 
 ````
 
