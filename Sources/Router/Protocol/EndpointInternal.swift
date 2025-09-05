@@ -75,14 +75,14 @@ extension EndpointInternal {
 				content: content))
 	}
 
-	public func _mount<Parameter: Decodable, Content: View>(
+	public func _mount<Data: Decodable, Content: View>(
 		at pathComponent: String,
-		_ type: Parameter.Type,
-		content: @escaping (Parameter) -> Content
+		_ type: Data.Type,
+		content: @escaping (Data) -> Content
 	) -> Self {
 		return self._mount(
 			at: pathComponent,
-			endpoint: EndpointParamterizedView(
+			endpoint: EndpointDataView(
 				type,
 				content: content))
 	}

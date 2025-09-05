@@ -36,12 +36,12 @@ public struct Navigator: Sendable {
 				url)
 	}
 
-	public func push<Parameter: Encodable>(
+	public func push<Data: Encodable>(
 		relativePath: String,
-		parameter: Parameter
+		data: Data
 	) throws {
 
-		let queryItems = try QueryCoder.TopLevelEncoder().encode(parameter)
+		let queryItems = try QueryCoder.TopLevelEncoder().encode(data)
 			.toDictionary()
 			.toQueryItems()
 
@@ -71,7 +71,7 @@ public struct Navigator: Sendable {
 	public func pop() {
 
 		guard
-			self.navigationStack.isEmpty
+			!self.navigationStack.isEmpty
 		else {
 			return
 		}

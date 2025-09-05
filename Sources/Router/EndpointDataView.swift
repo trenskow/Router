@@ -1,5 +1,5 @@
 //
-//  EndpointParamterizedView.swift
+//  EndpointDataView.swift
 //  Router
 //
 //  Created by Kristian Trenskow on 05/09/2025.
@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-struct EndpointParamterizedView<Content: View, Parameter: Decodable>: MountPoint {
+struct EndpointDataView<Content: View, Data: Decodable>: MountPoint {
 
-	let content: (Parameter) -> Content
+	let content: (Data) -> Content
 
 	init(
-		_ type: Parameter.Type,
-		content: @escaping (Parameter) -> Content
+		_ type: Data.Type,
+		content: @escaping (Data) -> Content
 	) {
 		self.content = content
 	}
@@ -26,7 +26,7 @@ struct EndpointParamterizedView<Content: View, Parameter: Decodable>: MountPoint
 		guard
 			pathComponents.isEmpty,
 			let _ = try? QueryCoder.TopLevelDecoder().decode(
-				Parameter.self,
+				Data.self,
 				from: Dictionary<String, QueryCoder.ItemType>.from(
 					dictionary: queryItems.toDictionary()
 				))
@@ -47,13 +47,13 @@ struct EndpointParamterizedView<Content: View, Parameter: Decodable>: MountPoint
 			throw RouterError.invalidUrl
 		}
 
-		let parameters = try QueryCoder.TopLevelDecoder().decode(
-			Parameter.self,
+		let data = try QueryCoder.TopLevelDecoder().decode(
+			Data.self,
 			from: Dictionary<String, QueryCoder.ItemType>.from(
 				dictionary: (urlComponents.queryItems ?? []).toDictionary()
 			))
 
-		return AnyView(self.content(parameters))
+		return AnyView(self.content(data))
 
 	}
 
