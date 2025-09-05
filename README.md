@@ -86,7 +86,6 @@ struct GreetView: View {
 				Text("Say Hello?")
 			}
 		}
-		.transition(.offset(CGSize(width: -50, height: 0)))
 	}
 
 }
@@ -113,7 +112,6 @@ struct GreeterView: View {
 				Text("Go Back")
 			}
 		}
-		.transition(.offset(CGSize(width: -50, height: 0)))
 	}
 
 }
@@ -123,12 +121,6 @@ struct RouterTestApp: RouterApp {
 
 	static let baseURL = URL(string: "https://kristians.work/")!
 	static let initialRelativePath: String = "/home"
-
-	@State var navigationStack: [URL] = []
-
-	var current: URL? {
-		return self.navigationStack.last
-	}
 
 	@MainActor
 	let root = Endpoint.Layout(RootLayout.self)
@@ -150,31 +142,12 @@ struct RouterTestApp: RouterApp {
 		) {
 			GreetView()
 		}
-		// View to display when URL was not found.
+		// View to display when URL was not found
 		.onNotFound {
 			Text("Not found")
 		}
 
-	func navigate(to url: URL) {
-		self.navigationStack
-			.append(url)
-	}
-
-	func navigateBack() {
-
-		guard
-			!self.navigationStack.isEmpty
-		else {
-			return
-		}
-
-		self.navigationStack.removeLast()
-
-	}
-
 }
-
-
 ````
 
 # License
